@@ -1,0 +1,19 @@
+# исходники и сборка — не публикуем
+src/
+build.sh
+qwe_mining_core.src
+*.bak
+*.devbak
+*.full.bak
+# данные игрока и статистика — НИКОГДА не в репо
+config/
+data.json*
+logs.json*
+bank_log.txt
+debug_house.txt
+qwe_mining_core.dat.new
+__pycache__/
+# корневой .dat держим в moonloader/, не в корне
+/qwe_mining_core.dat
+# старый одиночный скрипт, если остался в корне
+/QWE Mining.lua
