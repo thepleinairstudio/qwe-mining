@@ -42,7 +42,8 @@ function UPD.check(manual, curVer)
 	downloadUrlToFile(REPO_RAW .. 'version.json?t=' .. os.time(), TMPJ, function(_, status)
 		if status ~= dlstatus.STATUS_ENDDOWNLOADDATA then return end
 		local s = readFile(TMPJ); os.remove(TMPJ)
-		local ok, j = pcall(decodeJson, s or '')
+		if not s or not s:find('{', 1, true) then UPD.busy = false; setStatus('neterr', curVer); return end
+		local ok, j = pcall(decodeJson, s)
 		if not ok or type(j) ~= 'table' or not j.version then
 			UPD.busy = false; setStatus('neterr', curVer); return
 		end
@@ -51,20 +52,25 @@ function UPD.check(manual, curVer)
 		end
 		setStatus('updating', j.version)
 		local coreName = j.core or 'moonloader/qwe_mining_core.dat'
-		downloadUrlToFile(REPO_RAW .. coreName .. '?t=' .. os.time(), TMPD, function(_, st2)
-			if st2 ~= dlstatus.STATUS_ENDDOWNLOADDATA then return end
-			local bc = readFile(TMPD)
-			-- проверка: достаточно большой и грузится как валидный чанк (байткод или исходник)
-			local good = bc and #bc > 40000 and loadfile(TMPD) ~= nil
-			if not good then
-				os.remove(TMPD); UPD.busy = false; setStatus('baddata', j.version); return
-			end
-			if exists(DAT) then writeFile(DAT .. '.bak', readFile(DAT) or '') end
-			local okw = writeFile(DAT, bc)
-			os.remove(TMPD)
-			if not okw then UPD.busy = false; setStatus('writeerr', j.version); return end
-			setStatus('updated', j.version); UPD.busy = false
-			thisScript():reload()
+		-- второе скачивание нельзя запускать прямо из колбэка первого: moonloader падает
+		-- с «device or resource busy». Запускаем из отдельного потока.
+		lua_thread.create(function()
+			wait(200)
+			downloadUrlToFile(REPO_RAW .. coreName .. '?t=' .. os.time(), TMPD, function(_, st2)
+				if st2 ~= dlstatus.STATUS_ENDDOWNLOADDATA then return end
+				local bc = readFile(TMPD)
+				-- проверка: достаточно большой и грузится как валидный чанк (байткод или исходник)
+				local good = bc and #bc > 40000 and loadfile(TMPD) ~= nil
+				if not good then
+					os.remove(TMPD); UPD.busy = false; setStatus('baddata', j.version); return
+				end
+				if exists(DAT) then writeFile(DAT .. '.bak', readFile(DAT) or '') end
+				local okw = writeFile(DAT, bc)
+				os.remove(TMPD)
+				if not okw then UPD.busy = false; setStatus('writeerr', j.version); return end
+				setStatus('updated', j.version); UPD.busy = false
+				lua_thread.create(function() wait(100); thisScript():reload() end)
+			end)
 		end)
 	end)
 end
