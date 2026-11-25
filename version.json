@@ -1,6 +1,6 @@
 {
-  "version": "1.7.0",
-  "date": "24.11.2026",
+  "version": "1.8.0",
+  "date": "26.11.2026",
   "file": "moonloader/QWE Mining.lua",
   "core": "moonloader/qwe_mining_core.dat"
 }
