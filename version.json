@@ -2,5 +2,7 @@
   "version": "1.9.1",
   "date": "27.11.2026",
   "file": "moonloader/QWE Mining.lua",
-  "core": "moonloader/qwe_mining_core.dat"
+  "core": "moonloader/qwe_mining_core.dat",
+  "size": 257927,
+  "loader": 2
 }
